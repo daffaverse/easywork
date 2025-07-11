@@ -2,7 +2,7 @@ services:
   mysql_easywork:
     image: mysql:8.1.0
     environment: 
-      MySQL_ROOT_PASSWORD: e4syw0rk
+      MYSQL_ROOT_PASSWORD: e4syw0rk
       MYSQL_DATABASE: easywork_db
       MYSQL_USER: admin
       MYSQL_PASSWORD: e4syw0rk
@@ -16,7 +16,7 @@ services:
       timeout: 10s
       retries: 5
   
-  phpmyadmin_easywork:
+  phpmyadmin_easywork_v2:
     image: phpmyadmin/phpmyadmin
     depends_on:
       mysql_easywork:
