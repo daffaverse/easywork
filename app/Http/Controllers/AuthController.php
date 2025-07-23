@@ -1,12 +1,13 @@
 <?php
 
 namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class AuthController extends Controller
@@ -55,17 +56,24 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        $user = User::where('username', $request->username)->first();
+        $credentials = $request->only('username', 'password');
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+        if (!$token = auth()->attempt($credentials)) {
+            return response()->json(['error' => 'Invalid credentials'], 401);
         }
 
-        $token = JWTAuth::fromUser($user);
+        $user = auth()->user();
 
         return response()->json([
-            'user' => $user,
-            'token' => $token
+            'token' => $token,
+            'user' => [
+                'id' => $user->id,
+                'username' => $user->username,
+                'email' => $user->email,
+                'role' => $user->role, // Role akan muncul di sini
+                'nama_lengkap' => $user->nama_lengkap,
+            ],
+            'token_type' => 'bearer'
         ]);
     }
 
@@ -92,10 +100,34 @@ class AuthController extends Controller
 
     public function me()
     {
-        return response()->json(auth()->user());
+        try {
+            $user = auth()->user();
+        
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
+        
+            return response()->json([
+                'success' => true,
+                'user' => [
+                    'id' => $user->id,
+                    'username' => $user->username,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                    'nama_lengkap' => $user->nama_lengkap,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Server error: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
-    // Add this method to your AuthController
     protected function credentials(Request $request)
     {
         return [
